@@ -64,25 +64,25 @@
           "min": 1
         },
         "topBound": {
-          "label": "Top Bound",
+          "label": "Top Padding",
           "description": "",
           "editable": "number",
           "min": 0
         },
         "bottomBound": {
-          "label": "Bottom Bound",
-          "description": "",
-          "editable": "number",
-          "min": 0
-        },
-        "rightBound": {
-          "label": "Right Bound",
+          "label": "Bottom Padding",
           "description": "",
           "editable": "number",
           "min": 0
         },
         "leftBound": {
-          "label": "Left Bound",
+          "label": "Left Padding",
+          "description": "",
+          "editable": "number",
+          "min": 0
+        },
+        "rightBound": {
+          "label": "Right Padding",
           "description": "",
           "editable": "number",
           "min": 0
@@ -118,7 +118,7 @@
         first: 'firstCell || 0',
         last: 'lastCell || spriteX * spriteY',
         xPos: '-left - ((cell % spriteX) * animationWidth)',
-        yPos: '-top - (floor(cell / spriteY) * animationHeight)',
+        yPos: '-top - (floor(cell / spriteX) * animationHeight)',
         top: 'topBound || 0',
         bottom: 'bottomBound || img.height',
         left: 'leftBound || 0',
@@ -128,7 +128,6 @@
         animationWidth : 'sourceWidth / spriteX',
         animationHeight : 'sourceHeight / spriteY'
       },
-      lastCellChanged: function(){ console.log('lastCellChanged', arguments); },
       resetAnimation : function() {
         this.cell = this.first;
         this.fire('resetAnimationPosition');
@@ -150,8 +149,7 @@
 
         this.updateFrame = function(){
           this.cell++;
-          if (this.cell >= this.last) this.cell = this.first;
-          console.log('cell', this.cell, this.last, this.first);
+          if (this.cell > this.last) this.cell = this.first;
         };
         /*
           if (Math.abs(this.xPos - this.animationWidth) >= this.sourceWidth + this.leftBound) {
