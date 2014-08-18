@@ -1,0 +1,215 @@
+<polymer-element name="ceci-animator" extends="ceci-element"
+  attributes="spritesheet fps spriteX spriteY iterationCount topBound bottomBound leftBound rightBound lastCell firstCell"
+  fps="15" spriteX="1" spriteY="1" iterationCount="">
+  <ceci-definition>
+    {
+      "tags": [],
+      "thumbnail": "./thumbnail.png",
+      "description": "Description",
+      "name": "Animator",
+      "broadcasts": {
+        "looped": {
+          "label": "Looped",
+          "description": "Occurs when animation loops",
+          "default": false
+        },
+        "ended": {
+          "label": "Ended",
+          "description": "Occurs when animation ends",
+          "default": false
+        }
+      },
+      "listeners": {
+        "play": {
+          "description": "Play the animation",
+          "label": "Play",
+          "default": true
+        },
+        "pause": {
+          "description": "Pause the animation playback",
+          "label": "Pause",
+          "default": false
+        },
+        "step": {
+          "description": "Move the animation one frame forward",
+          "label": "Step",
+          "default": false
+        }
+      },
+      "attributes": {
+        "spritesheet": {
+          "label": "Spritesheet Source",
+          "description": "The spritesheet to animate",
+          "editable": "text"
+        },
+        "fps": {
+          "label": "Frames Per Second",
+          "description": "The animation speed",
+          "editable": "number"
+        },
+        "spriteX": {
+          "label": "Sprites Across",
+          "description": "The number of sprites horizontally in the spritesheet",
+          "editable": "number"
+        },
+        "spriteY": {
+          "label": "Sprites Down",
+          "description": "The number of sprites vertically in the spritesheet",
+          "editable": "number"
+        },
+        "iterationCount": {
+          "label": "Iteration count (optional)",
+          "description": "The number of times the animation should repeat",
+          "editable": "number",
+          "min": 1
+        },
+        "topBound": {
+          "label": "Top Bound",
+          "description": "",
+          "editable": "number",
+          "min": 0
+        },
+        "bottomBound": {
+          "label": "Bottom Bound",
+          "description": "",
+          "editable": "number",
+          "min": 0
+        },
+        "rightBound": {
+          "label": "Right Bound",
+          "description": "",
+          "editable": "number",
+          "min": 0
+        },
+        "leftBound": {
+          "label": "Left Bound",
+          "description": "",
+          "editable": "number",
+          "min": 0
+        },
+        "firstCell": {
+          "label": "Starting Cell",
+          "description": "",
+          "editable": "number",
+          "min": 0
+        },
+        "lastCell": {
+          "label": "Last Cell",
+          "description": "",
+          "editable": "number",
+          "min": 0
+        }
+      }
+    }
+  </ceci-definition>
+  <template>
+    <link rel="stylesheet" href="component.css"></link>
+    <div id="animation" 
+         style="background-image: url('{{img.src}}'); background-position: {{xPos}}px {{yPos}}px; width: {{animationWidth}}px; height: {{animationHeight}}px;"
+    ></div>
+    <shadow></shadow>
+  </template>
+  <script>
+    Polymer('ceci-animator', {
+      floor: function(n) {
+        return Math.floor(n);
+      },
+      computed: {
+        first: 'firstCell || 0',
+        last: 'lastCell || spriteX * spriteY',
+        xPos: '-left - ((cell % spriteX) * animationWidth)',
+        yPos: '-top - (floor(cell / spriteY) * animationHeight)',
+        top: 'topBound || 0',
+        bottom: 'bottomBound || img.height',
+        left: 'leftBound || 0',
+        right: 'rightBound || img.width',
+        sourceWidth : 'right - left',
+        sourceHeight : 'bottom - top',
+        animationWidth : 'sourceWidth / spriteX',
+        animationHeight : 'sourceHeight / spriteY'
+      },
+      lastCellChanged: function(){ console.log('lastCellChanged', arguments); },
+      resetAnimation : function() {
+        this.cell = this.first;
+        this.fire('resetAnimationPosition');
+      },
+      animationWidthChanged : function(){ 
+        this.resetAnimation();
+      },
+      animationHeightChanged : function(){ 
+        this.resetAnimation();
+      },
+      ready: function () {
+        this.super();
+        this.anim = this.$.animation;
+
+        this.cell = this.first;
+        this.img;
+        this.frameId = null;
+        this.start = null;
+
+        this.updateFrame = function(){
+          this.cell++;
+          if (this.cell >= this.last) this.cell = this.first;
+          console.log('cell', this.cell, this.last, this.first);
+        };
+        /*
+          if (Math.abs(this.xPos - this.animationWidth) >= this.sourceWidth + this.leftBound) {
+            if (Math.abs(this.yPos - this.animationHeight) >= this.sourceHeight) {
+              this.iteration++;
+              this.broadcast("looped", 1);
+            }
+            this.yPos = (this.yPos - this.animationHeight) % this.sourceHeight;
+          }
+          this.xPos = (this.xPos - this.animationWidth) % this.sourceWidth;
+        };
+        */
+
+        this.tick = function(timestamp){
+          var elapsed;
+          if (this.start === null) this.start = timestamp;
+          elapsed = timestamp - this.start;
+          if (elapsed > 1000/this.fps) {
+            this.updateFrame();
+            this.start = timestamp;
+            this.fire('updateFrame');
+          }
+          if (isNaN(parseInt(this.iterationCount)) || this.iteration < this.iterationCount) {
+            this.frameId = window.requestAnimationFrame(this.tick);
+          }
+          else {
+            this.frameId = null;
+            this.start = null;
+            this.broadcast("ended", 1);
+          }
+          this.fire('tick', timestamp);
+        }.bind(this);
+       
+      },
+      spritesheetChanged : function(oldValue, newValue) {
+        this.img = new Image();
+        this.img.onload = function() {
+          this.fire('spritesheetLoaded', this.img);
+        }.bind(this);
+        this.img.src = newValue;
+      },
+      play : function(){
+        if (this.frameId === null && this.img) {
+          this.iteration = 0;
+          this.frameId = window.requestAnimationFrame(this.tick);
+        }
+      },
+      pause : function() {
+        window.cancelAnimationFrame(this.frameId);
+        this.frameId = null;
+        this.start = null;
+      },
+      step : function(){
+        this.updateFrame();
+      },
+      detached : function(){
+        if (this.frameId) window.cancelAnimationFrame(this.frameId);
+      }
+    });
+  </script>
+</polymer-element>

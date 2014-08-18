@@ -1,0 +1,152 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>component-animator tests</title>
+  <link rel="stylesheet" href="/vendor/mocha/mocha.css" type="text/css">
+  <script src="/vendor/platform/platform.js"></script>
+  <script src="/vendor/chai/chai.js"></script>
+  <script src="/vendor/requirejs/require.js"></script>
+  <script src="/javascripts/requireConfig.js"></script>
+  <link rel="import" href="/vendor/polymer/polymer.html">
+  <link rel="import" href="/ceci/ceci-definition.html">
+  <link rel="import" href="/ceci/ceci-element-base.html">
+  <link rel="import" href="/ceci/ceci-element.html">
+  <link rel="import" href="/ceci/ceci-channel-map.html">
+  <link rel="import" href="./component.html">
+</head>
+<body>
+  <ceci-channel-map />
+  <div id="mocha"></div>
+  <script src="/vendor/mocha/mocha.js"></script>
+  <script>mocha.setup('bdd');</script>
+  <script>
+    var should = chai.should();
+    describe('component-animator', function(){
+      beforeEach(function(done){
+        this.el = document.createElement('ceci-animator');
+        document.body.appendChild(this.el);
+        //Test sprites made by dogchicken and are available at http://opengameart.org/content/cat-fighter-sprite-sheet. 
+        this.el.spritesheet = './sprite.png';
+        this.el.spriteX = 10;
+        this.el.spriteY = 6;
+        this.el.addEventListener('spritesheetLoaded', function(evt){
+          done();
+        });
+      });
+
+      afterEach(function(){
+        //document.body.removeChild(this.el);
+      });
+
+      it('should resize x as spritex changes', function(){
+        var before = this.el.animationWidth;
+        this.el.spriteX = this.el.spriteX * 2;
+        this.el.animationWidth.should.equal(before/2);
+      });
+
+      it('should resize y as spritey changes', function() {
+        var before = this.el.animationHeight;
+        this.el.spriteY = this.el.spriteY * 2;
+        this.el.animationHeight.should.equal(before/2);
+      });
+
+      it('should resize when new spritesheet loads', function(done) {
+        var before = {w: this.el.animationWidth, h: this.el.animationHeight};
+        this.el.spritesheet = "./sprite2.png";
+        this.el.addEventListener('spritesheetLoaded', function() {
+          this.el.animationWidth.should.not.equal(before.w);
+          this.el.animationHeight.should.not.equal(before.h);
+          done();
+        }.bind(this));
+      });
+
+      it('should reset to first frame on resize', function(done){
+        this.el.spriteX = 2;
+        this.el.spriteY = 2;
+        this.el.step();
+        this.el.step();
+        this.el.step();
+        this.el.xPos.should.not.equal(0);
+        this.el.yPos.should.not.equal(0);
+        this.el.spriteX = 4;
+        this.el.addEventListener('resetAnimationPosition', function() {
+          console.log(this.el.xPos, this.el.yPos);
+          this.el.xPos.should.equal(0);
+          this.el.yPos.should.equal(0);
+          done();
+        }.bind(this));
+      });
+
+      it('should broadcast loop when animation loops', function(){
+        this.el.spriteX = 1;
+        this.el.spriteY = 1;
+        this.el.play();
+      });
+
+      it.skip('should broadcast end when animation ends', function() {
+
+      });
+
+      it('should continually tick on play', function(done){
+        var ticks = 0;
+        this.el.addEventListener('tick', function(){
+          // test will timeout if not ticking
+          if (++ticks >= 3) done();
+        });
+        this.el.play();
+      });
+
+      it('should stop ticking on pause', function(done){
+        var ticks = 0;
+        this.el.addEventListener('tick', function(){
+          ticks++;
+          if (ticks === 3) {
+            this.el.pause();
+            setTimeout(function(){
+              ticks.should.equal(3);
+              done();
+            }, (1000/60)*3);
+          }
+        }.bind(this));
+        this.el.play();
+      });
+
+      describe('For a 2x2 spritesheet', function() {
+        beforeEach(function(){
+          this.el.spriteX = 2;
+          this.el.spriteY = 2;
+        });
+
+        it('should change xPos on first step', function() {
+          var before = {
+            x: this.el.xPos,
+            y: this.el.yPos
+          };
+          this.el.step();
+          this.el.xPos.should.not.equal(before.x);
+          this.el.yPos.should.equal(before.y);
+        });
+
+        it('should change yPos on second step', function() {
+          var before = {
+            x: this.el.xPos,
+            y: this.el.yPos
+          };
+          this.el.step();
+          this.el.step();
+          this.el.xPos.should.equal(before.x);
+          this.el.yPos.should.not.equal(before.y);
+        });
+      });
+
+    });
+  </script>
+  <script>
+    window.addEventListener('polymer-ready', function() {
+      mocha.checkLeaks();
+      mocha.run();
+    });
+  </script>
+</body>
+</html>

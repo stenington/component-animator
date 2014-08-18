@@ -1,0 +1,16 @@
+{
+	"ceci-animator": "Animator",
+	"ceci-test/description": "Responds to your clicks and taps.",
+	"ceci-test/attributes/label": "Click Me",
+	"ceci-test/attributes/label/label": "Label",
+	"ceci-test/attributes/label/description": "Text shown on the button.",
+	"ceci-test/attributes/value": "Click",
+	"ceci-test/attributes/value/label": "Value",
+	"ceci-test/attributes/value/description": "Value sent by the button.",
+	"ceci-test/attributes/textcolor/label": "Text Color",
+	"ceci-test/attributes/textcolor/description": "Color of the text on the button's label.",
+	"ceci-test/attributes/buttoncolor/label": "Button Color",
+	"ceci-test/attributes/buttoncolor/description": "Background color of the button.",
+	"ceci-test/attributes/buttonactivecolor/label": "Button Active Color",
+	"ceci-test/attributes/buttonactivecolor/description": "Background color of the button while it is being clicked or tapped."
+}
